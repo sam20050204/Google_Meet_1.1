@@ -41,7 +41,7 @@ var AppProcess = (function () {
       } else {
         audio.enabled = false;
         $(this).html(
-          "<span class='material-icons' style='width:100%;'>mic_off</span>"
+          "<span class='material-icons' style='width:100%;'>mic_off</span>" 
         );
         removeMediaSenders(rtp_aud_senders);
         audio.stop();
@@ -126,6 +126,7 @@ var AppProcess = (function () {
       $("#ScreenShareOnOf").html(
         '<span class="material-icons">present_to_all</span><div>Present Now</div>'
       );
+        $("#ScreenShareOnOf").html('<span class="material-icons">present_to_all</span><div>Present Now</div>')
       video_st = newVideoState;
 
       removeVideoStream(rtp_vid_senders);
@@ -382,7 +383,10 @@ var MyApp = (function () {
         }
       }
     });
-
+socket.on("inform_other_about_disconnected_user",function(data){
+  $("#"+data.connId).remove();
+  AppProcess.closeConnectionCall(data.connId);
+})
     socket.on("inform_others_about_me", function (data) {
       addUser(data.other_user_id, data.connId, data.userNumber);
 
