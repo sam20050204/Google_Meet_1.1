@@ -41,7 +41,7 @@ var AppProcess = (function () {
       } else {
         audio.enabled = false;
         $(this).html(
-          "<span class='material-icons' style='width:100%;'>mic_off</span>" 
+          "<span class='material-icons' style='width:100%;'>mic_off</span>"
         );
         removeMediaSenders(rtp_aud_senders);
         audio.stop();
@@ -126,7 +126,6 @@ var AppProcess = (function () {
       $("#ScreenShareOnOf").html(
         '<span class="material-icons">present_to_all</span><div>Present Now</div>'
       );
-        $("#ScreenShareOnOf").html('<span class="material-icons">present_to_all</span><div>Present Now</div>')
       video_st = newVideoState;
 
       removeVideoStream(rtp_vid_senders);
@@ -199,6 +198,17 @@ var AppProcess = (function () {
       );
     }
   }
+  var iceConfiguration = {
+    iceServers: [
+      {
+        urls: "stun:stun.l.google.com:19302",
+      },
+      {
+        urls: "stun:stun1.l.google.com:19302",
+      },
+    ],
+  };
+
   var iceConfiguration = {
     iceServers: [
       {
@@ -333,20 +343,20 @@ var AppProcess = (function () {
       remote_vid_stream[connid] = null;
     }
   }
-return {
-  setNewConnection: async function (connid) {
-    await setConnection(connid);
-  },
-  init: async function (SDP_function, my_connid) {
-    await _init(SDP_function, my_connid);
-  },
-  processClientFunc: async function (data, from_connid) {
-    await SDPProcess(data, from_connid);
-  },
-  closeConnectionCall: async function (connid) {
-    await closeConnection(connid);
-  },
-};
+  return {
+    setNewConnection: async function (connid) {
+      await setConnection(connid);
+    },
+    init: async function (SDP_function, my_connid) {
+      await _init(SDP_function, my_connid);
+    },
+    processClientFunc: async function (data, from_connid) {
+      await SDPProcess(data, from_connid);
+    },
+    closeConnectionCall: async function (connid) {
+      await closeConnection(connid);
+    },
+  };
 })();
 
 var MyApp = (function () {
@@ -383,14 +393,50 @@ var MyApp = (function () {
         }
       }
     });
-socket.on("inform_other_about_disconnected_user",function(data){
-  $("#"+data.connId).remove();
-  AppProcess.closeConnectionCall(data.connId);
-})
+    socket.on("inform_other_about_disconnected_user", function (data) {
+      $("#" + data.connId).remove();
+      $(".participant-count").text(data.uNumber);
+      $("#participant_" + data.connId + "").remove();
+      AppProcess.closeConnectionCall(data.connId);
+    });
+    // <!-- .....................HandRaise .................-->
+
+    socket.on("HandRaise_info_for_others", function (data) {
+      if (data.handRaise) {
+        $("#hand_" + data.connId).show();
+      } else {
+        $("#hand_" + data.connId).hide();
+      }
+    });
+    // <!-- .....................HandRaise .................-->
+
     socket.on("inform_others_about_me", function (data) {
       addUser(data.other_user_id, data.connId, data.userNumber);
 
       AppProcess.setNewConnection(data.connId);
+    });
+    socket.on("showFileMessage", function (data) {
+      var num_of_att = $(".left-align").length;
+      var added_mar = num_of_att * 10;
+      var mar_top = "-" + (135 + added_mar);
+      $(".g-details").css({ "margin-top": mar_top });
+
+      var time = new Date();
+      var lTime = time.toLocaleString("en-US", {
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+      });
+      var attachFileAreaForOther = document.querySelector(".show-attach-file");
+
+      attachFileAreaForOther.innerHTML +=
+        "<div class='left-align' style='display:flex; align-items:center;'><img src='public/assets/images/other.jpg' style='height:40px;width:40px;' class='caller-image circle'><div style='font-weight:600;margin:0 5px;'>" +
+        data.username +
+        "</div>:<div><a style='color:#007bff;' href='" +
+        data.filePath +
+        "' download>" +
+        data.fileName +
+        "</a></div></div><br/>";
     });
     socket.on("inform_me_about_other_user", function (other_users) {
       var userNumber = other_users.length;
@@ -409,15 +455,77 @@ socket.on("inform_other_about_disconnected_user",function(data){
     socket.on("SDPProcess", async function (data) {
       await AppProcess.processClientFunc(data.message, data.from_connid);
     });
+    socket.on("showChatMessage", function (data) {
+      var time = new Date();
+      var lTime = time.toLocaleString("en-US", {
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+      });
+      var div = $("<div>").html(
+        "<span class='font-weight-bold mr-3' style='color:black'>" +
+          data.from +
+          "</span>" +
+          lTime +
+          "</br>" +
+          data.message
+      );
+      $("#messages").append(div);
+    });
+  }
+  function eventHandeling() {
+    // <!-- ......................HandRaise ...............-->
+    var handRaise = false;
+    $("#handRaiseAction").on("click", async function () {
+      if (!handRaise) {
+        $("img.handRaise").show();
+        handRaise = true;
+        socket.emit("sendHandRaise", handRaise);
+      } else {
+        $("img.handRaise").hide();
+        handRaise = false;
+        socket.emit("sendHandRaise", handRaise);
+      }
+    });
+    // <!-- ......................HandRaise ...............-->
+    $("#btnsend").on("click", function () {
+      var msgData = $("#msgbox").val();
+      socket.emit("sendMessage", msgData);
+      var time = new Date();
+      var lTime = time.toLocaleString("en-US", {
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+      });
+      var div = $("<div>").html(
+        "<span class='font-weight-bold mr-3' style='color:black'>" +
+          user_id +
+          "</span>" +
+          lTime +
+          "</br>" +
+          msgData
+      );
+      $("#messages").append(div);
+      $("#msgbox").val("");
+    });
+
+    var url = window.location.href;
+    $(".meeting_url").text(url);
+
+    $("#divUsers").on("dblclick", "video", function () {
+      this.requestFullscreen();
+    });
   }
 
-    function addUser(other_user_id, connId, userNum) {
+  function addUser(other_user_id, connId, userNum) {
     var newDivId = $("#otherTemplate").clone();
     newDivId = newDivId.attr("id", connId).addClass("other");
     newDivId.find("h2").text(other_user_id);
     newDivId.find("video").attr("id", "v_" + connId);
     newDivId.find("audio").attr("id", "a_" + connId);
+    // <!-- .....................HandRaise .................-->
     newDivId.find("img").attr("id", "hand_" + connId);
+    // <!-- .....................HandRaise .................-->
     newDivId.show();
     $("#divUsers").append(newDivId);
     $(".in-call-wrap-up").append(
@@ -428,9 +536,21 @@ socket.on("inform_other_about_disconnected_user",function(data){
         '</div> </div> <div class="participant-action-wrap display-center"> <div class="participant-action-dot display-center mr-2 cursor-pointer"> <span class="material-icons"> more_vert </span> </div> <div class="participant-action-pin display-center mr-2 cursor-pointer"> <span class="material-icons"> push_pin </span> </div> </div> </div>'
     );
     $(".participant-count").text(userNum);
-    
   }
-
+  
+ 
+  $(document).on("click", ".meeting-heading-cross", function () {
+    $(".g-right-details-wrap").hide(300);
+  });
+  
+  $(document).on("click", ".top-left-chat-wrap", function () {
+    $(".people-heading").removeClass("active");
+    $(".chat-heading").addClass("active");
+    $(".g-right-details-wrap").show(300);
+    $(".in-call-wrap-up").hide(300);
+    $(".chat-show-wrap").show(300);
+  });
+  
   return {
     _init: function (uid, mid) {
       init(uid, mid);
