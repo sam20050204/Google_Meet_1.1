@@ -209,17 +209,6 @@ var AppProcess = (function () {
     ],
   };
 
-  var iceConfiguration = {
-    iceServers: [
-      {
-        urls: "stun:stun.l.google.com:19302",
-      },
-      {
-        urls: "stun:stun1.l.google.com:19302",
-      },
-    ],
-  };
-
   async function setConnection(connid) {
     var connection = new RTCPeerConnection(iceConfiguration);
 
@@ -528,13 +517,7 @@ var MyApp = (function () {
     // <!-- .....................HandRaise .................-->
     newDivId.show();
     $("#divUsers").append(newDivId);
-    $(".in-call-wrap-up").append(
-      '<div class="in-call-wrap d-flex justify-content-between align-items-center mb-3" id="participant_' +
-        connId +
-        '"> <div class="participant-img-name-wrap display-center cursor-pointer"> <div class="participant-img"> <img src="public/Assets/images/other.jpg" alt="" class="border border-secondary" style="height: 40px;width: 40px;border-radius: 50%;"> </div> <div class="participant-name ml-2"> ' +
-        other_user_id +
-        '</div> </div> <div class="participant-action-wrap display-center"> <div class="participant-action-dot display-center mr-2 cursor-pointer"> <span class="material-icons"> more_vert </span> </div> <div class="participant-action-pin display-center mr-2 cursor-pointer"> <span class="material-icons"> push_pin </span> </div> </div> </div>'
-    );
+    $(".in-call-wrap-up").append('<div class="in-call-wrap-up" style="display: none !important;"> <div class="in-call-wrap d-flex justify-content-between align-items-center mb-3" id="participant_'+connId+'"> <div class="participant-img-name-wrap display-center cursor-pointer"> <div class="participant-img"> <img src="public/Assets/images/other.jpg" alt="" class="border border-secondary" style="height: 40px;width: 40px;border-radius: 50%;"> </div> <div class="participant-name ml-2">'+other_user_id+'</div> </div> <div class="participant-action-wrap display-center"> <div class="participant-action-dot display-center mr-2 cursor-pointer"> <span class="material-icons"> more_vert </span> </div> <div class="participant-action-pin display-center mr-2 cursor-pointer"> <span class="material-icons"> push_pin </span> </div> </div> </div> </div>');
     $(".participant-count").text(userNum);
   }
   
@@ -550,7 +533,15 @@ var MyApp = (function () {
     $(".in-call-wrap-up").hide(300);
     $(".chat-show-wrap").show(300);
   });
-  
+
+  $(document).on("click",".people-heading",function(){
+    $(".chat-show-wrap").hide(300);
+    $(".in-call-wrap-up").show(300);
+  });
+  $(document).on("click",".chat-heading",function(){
+    $(".chat-show-wrap").show(300);
+    $(".in-call-wrap-up").hide(300);
+  });
   return {
     _init: function (uid, mid) {
       init(uid, mid);
