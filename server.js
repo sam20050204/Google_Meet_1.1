@@ -5,6 +5,7 @@ var server = app.listen(3000, function () {
   console.log("Listening on port 3000");
 });
 const fs = require('fs');
+const fileUpload = require("express-fileupload");
 const io = require("socket.io")(server, {
   allowEIO3: true, //false by default
 });
@@ -84,6 +85,7 @@ app.post("/attachimg", function (req, res) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir);
   }
+  
 
   imageFile.mv(
     "public/attachment/" + data.meeting_id + "/" + imageFile.name,
