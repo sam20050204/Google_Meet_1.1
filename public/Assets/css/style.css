@@ -123,11 +123,11 @@ video{
     width: 300px;
 }
 .active{
-    background-color: #00808047;
+    background-color: #a2dada47;
     border-radius: 5px;
 }
 .top-box{
-    background-color: rgb(14 6 6);
+    background-color: rgba(79, 131, 123, 0.644);
     position: fixed;
     width: 30%;
     height: 30%;
