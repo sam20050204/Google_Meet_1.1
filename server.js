@@ -92,7 +92,26 @@ io.on("connection", (socket) => {
     }
   });
 
-
+  // <!-- .....................HandRaise .................-->
+  socket.on("sendHandRaise", function (data) {
+    var senderID = userConnections.find((p) => p.connectionId == socket.id);
+    console.log("senderID :", senderID.meeting_id);
+    if (senderID.meeting_id) {
+      var meetingid = senderID.meeting_id;
+      // userConnections = userConnections.filter(
+      //   (p) => p.connectionId != socket.id
+      // );
+      var list = userConnections.filter((p) => p.meeting_id == meetingid);
+      list.forEach((v) => {
+        var userNumberAfUserLeave = userConnections.length;
+        socket.to(v.connectionId).emit("HandRaise_info_for_others", {
+          connId: socket.id,
+          handRaise: data,
+        });
+      });
+    }
+  });
+  // <!-- .....................HandRaise .................-->
 });
 
 app.use(fileUpload());

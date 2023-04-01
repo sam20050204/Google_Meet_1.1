@@ -348,6 +348,8 @@ var AppProcess = (function () {
   };
 })();
 
+
+
 var MyApp = (function () {
   var socket = null;
   var user_id = "";
@@ -526,11 +528,76 @@ var MyApp = (function () {
     );
     $(".participant-count").text(userNum);
   }
-  
- 
-  $(document).on("click", ".meeting-heading-cross", function () {
+  $(document).on("click", ".people-heading", function () {
+    $(".in-call-wrap-up").show(300);
+    $(".chat-show-wrap").hide(300 );
+    $(this).addClass("active");
+    $(".chat-heading").removeClass("active"); 
+  });
+  $(document).on("click", ".chat-heading", function () {
+    $(".in-call-wrap-up").hide(300);
+    $(".chat-show-wrap").show(300);
+    $(this).addClass("active");
+    $(".people-heading").removeClass("active");
+  });
+   $(document).on("click", ".meeting-heading-cross", function () {
     $(".g-right-details-wrap").hide(300);
   });
+  $(document).on("click",".top-left-participant-wrap",function(){
+    $(".people-heading").addClass("active");
+    $(".chat-heading").removeClass("active");
+    $(".g-right-details-wrap").show(300);
+    $(".in-call-wrap-up").show(300);
+    $(".chat-show-wrap").hide(300);
+  });
+  $(document).on("click",".top-left-chat-wrap",function(){
+    $(".people-heading").removeClass("active");
+    $(".chat-heading").addClass("active");
+    $(".g-right-details-wrap").show(300);
+    $(".in-call-wrap-up").hide(300);
+    $(".chat-show-wrap").show(300);
+  });
+  $(document).on("click",".end-call-wrap",function(){
+    $(".top-box-show").css({
+      "display":"block"
+    }).html(' <div class="top-box align-vertical-middle profile-dialogue-show"> <h4 class="mt-3" style="text-align:center; color:white;">Leave Meeting</h1> <hr> <div class="call-leave-cancel-action d-flex justify-content-center align-items-center w-100"> <a href="/action.html"><button class="call-leave-action btn btn-danger mr-5">Leave</button></a> <button class="call-cancel-action btn btn-secondary">Cancel</button> </div> </div>');
+  });
+  $(document).mouseup(function(e){
+    var container = new Array();
+    container.push($(".top-box-show"));
+    $.each(container, function(key,value){
+      if(!$(value).is(e.target) && $(value).has(e.target).length == 0){
+        $(value).empty();
+      }
+    });
+  });
+  $(document).mouseup(function(e){
+    var container = new Array();
+    container.push($(".g-details"));
+    container.push($(".g-right-details-wrap"));
+    $.each(container, function(key,value){
+      if(!$(value).is(e.target) && $(value).has(e.target).length == 0){
+        $(value).hide(300);
+      }
+    });
+  });
+
+  $(document).on("click",".call-cancel-action", function(){
+    $('.top-box-show').html("");
+  });
+  $(document).on("click", ".copy_info", function(){
+    var $temp = $("<input>");
+    $("body").append($temp);
+    $temp.val($(".meeting_url").text()).select();
+    document.execCommand("copy");
+    $temp.remove();
+    $(".link-conf").show();
+    setTimeout(function(){
+      $(".link-conf").hide();
+    }, 3000);
+  });
+
+
   $(document).on("click", ".meeting-details-button", function () {
     $(".g-details").slideDown(300);
   });
@@ -603,75 +670,10 @@ var MyApp = (function () {
     $(".chat-show-wrap").show(300);
   });
 
-  $(document).on("click",".people-heading",function(){
-    $(".chat-show-wrap").hide(300);
-    $(".in-call-wrap-up").show(300);
-    $(this).addClass("active");
-    $(".chat-heading").removeClass("active");
-    
-  });
-  $(document).on("click",".chat-heading",function(){
-    $(".chat-show-wrap").show(300);
-    $(".in-call-wrap-up").hide(300);
-    $(this).addClass("active");
-    $(".people-heading").removeClass("active");
-  });
   $(document).on("click",".meeting-heading-cross",function(){
     $(".g-right-details-wrap").hide(300);
   });
-  $(document).on("click",".top-left-participant-wrap",function(){
-    $(".people-heading").addClass("active");
-    $(".chat-heading").removeClass("active");
-    $(".g-right-details-wrap").show(300);
-    $(".in-call-wrap-up").show(300);
-    $(".chat-show-wrap").hide(300);
-  });
-  $(document).on("click",".top-left-chat-wrap",function(){
-    $(".people-heading").removeClass("active");
-    $(".chat-heading").addClass("active");
-    $(".g-right-details-wrap").show(300);
-    $(".in-call-wrap-up").hide(300);
-    $(".chat-show-wrap").show(300);
-  });
-  $(document).on("click",".end-call-wrap",function(){
-    $(".top-box-show").css({
-      "display":"block"
-    }).html(' <div class="top-box align-vertical-middle profile-dialogue-show"> <h4 class="mt-3" style="text-align:center; color:white;">Leave Meeting</h1> <hr> <div class="call-leave-cancel-action d-flex justify-content-center align-items-center w-100"> <a href="/action.html"><button class="call-leave-action btn btn-danger mr-5">Leave</button></a> <button class="call-cancel-action btn btn-secondary">Cancel</button> </div> </div>');
-  });
-  $(document).mouseup(function(e){
-    var container = new Array();
-    container.push($(".top-box-show"));
-    $.each(container, function(key,value){
-      if(!$(value).is(e.target) && $(value).has(e.target).length == 0){
-        $(value).empty();
-      }
-    });
-  });
-  $(document).mouseup(function(e){
-    var container = new Array();
-    container.push($(".g-details"));
-    container.push($(".g-right-details-wrap"));
-    $.each(container, function(key,value){
-      if(!$(value).is(e.target) && $(value).has(e.target).length == 0){
-        $(value).hide(300);
-      }
-    });
-  });
-
-  $(document).on("click",".call-cancel-action", function(){
-    $('.top-box-show').html("");
-  });
-  $(document).on("click", ".copy_info", function(){
-    var $temp = $("<input>");
-    $("body").append($temp);
-    $temp.val($(".meeting_url").text()).select();
-    document.execCommand("copy");
-    $temp.remove();
-    $(".link-conf").show();
-    setTimeout(function(){
-      $(".link-conf").hide();
-    }, 3000);
-  });
+ 
 
   return {
     _init: function (uid, mid) {
