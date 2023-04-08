@@ -347,9 +347,6 @@ var AppProcess = (function () {
     },
   };
 })();
-
-
-
 var MyApp = (function () {
   var socket = null;
   var user_id = "";
@@ -530,9 +527,9 @@ var MyApp = (function () {
   }
   $(document).on("click", ".people-heading", function () {
     $(".in-call-wrap-up").show(300);
-    $(".chat-show-wrap").hide(300 );
+    $(".chat-show-wrap").hide(300);
     $(this).addClass("active");
-    $(".chat-heading").removeClass("active"); 
+    $(".chat-heading").removeClass("active");
   });
   $(document).on("click", ".chat-heading", function () {
     $(".in-call-wrap-up").hide(300);
@@ -540,17 +537,17 @@ var MyApp = (function () {
     $(this).addClass("active");
     $(".people-heading").removeClass("active");
   });
-   $(document).on("click", ".meeting-heading-cross", function () {
+  $(document).on("click", ".meeting-heading-cross", function () {
     $(".g-right-details-wrap").hide(300);
   });
-  $(document).on("click",".top-left-participant-wrap",function(){
+  $(document).on("click", ".top-left-participant-wrap", function (){
     $(".people-heading").addClass("active");
     $(".chat-heading").removeClass("active");
     $(".g-right-details-wrap").show(300);
     $(".in-call-wrap-up").show(300);
     $(".chat-show-wrap").hide(300);
   });
-  $(document).on("click",".top-left-chat-wrap",function(){
+  $(document).on("click", ".top-left-chat-wrap", function () {
     $(".people-heading").removeClass("active");
     $(".chat-heading").addClass("active");
     $(".g-right-details-wrap").show(300);
@@ -558,31 +555,34 @@ var MyApp = (function () {
     $(".chat-show-wrap").show(300);
   });
   $(document).on("click",".end-call-wrap",function(){
-    $(".top-box-show").css({
-      "display":"block"
-    }).html(' <div class="top-box align-vertical-middle profile-dialogue-show"> <h4 class="mt-3" style="text-align:center; color:white;">Leave Meeting</h1> <hr> <div class="call-leave-cancel-action d-flex justify-content-center align-items-center w-100"> <a href="/action.html"><button class="call-leave-action btn btn-danger mr-5">Leave</button></a> <button class="call-cancel-action btn btn-secondary">Cancel</button> </div> </div>');
+    $(".top-box-show")
+      .css({
+        "display":"block"
+      })
+     .html(' <div class="top-box align-vertical-middle profile-dialogue-show"> <h4 class="mt-3" style="text-align:center; color:white;">Leave Meeting</h1> <hr> <div class="call-leave-cancel-action d-flex justify-content-center align-items-center w-100"> <a href="/action.html"><button class="call-leave-action btn btn-danger mr-5">Leave</button></a> <button class="call-cancel-action btn btn-secondary">Cancel</button> </div> </div>'
+       );
   });
-  $(document).mouseup(function(e){
+  $(document).mouseup(function (e) {
     var container = new Array();
     container.push($(".top-box-show"));
-    $.each(container, function(key,value){
-      if(!$(value).is(e.target) && $(value).has(e.target).length == 0){
+    $.each(container, function (key, value){
+      if (!$(value).is(e.target) && $(value).has(e.target).length == 0) {
         $(value).empty();
       }
     });
   });
-  $(document).mouseup(function(e){
+  $(document).mouseup(function (e) {
     var container = new Array();
     container.push($(".g-details"));
     container.push($(".g-right-details-wrap"));
-    $.each(container, function(key,value){
-      if(!$(value).is(e.target) && $(value).has(e.target).length == 0){
+    $.each(container, function (key, value) {
+      if(!$(value).is(e.target) && $(value).has(e.target).length == 0) {
         $(value).hide(300);
       }
     });
   });
 
-  $(document).on("click",".call-cancel-action", function(){
+  $(document).on("click",".call-cancel-action", function () {
     $('.top-box-show').html("");
   });
   $(document).on("click", ".copy_info", function(){
@@ -661,19 +661,80 @@ var MyApp = (function () {
       fileName: attachFileName,
     });
   });
-
-  $(document).on("click", ".top-left-chat-wrap", function () {
-    $(".people-heading").removeClass("active");
-    $(".chat-heading").addClass("active");
-    $(".g-right-details-wrap").show(300);
-    $(".in-call-wrap-up").hide(300);
-    $(".chat-show-wrap").show(300);
-  });
-
-  $(document).on("click",".meeting-heading-cross",function(){
-    $(".g-right-details-wrap").hide(300);
-  });
  
+$(document).on("click", ".option-icon", function () {
+  $(".recording-show").toggle(300);
+});
+
+$(document).on("click", ".start-record", function () {
+  $(this)
+    .removeClass()
+    .addClass("stop-record btn-danger text-dark")
+    .text("Stop Recording");
+  startRecording();
+});
+$(document).on("click", ".stop-record", function () {
+  $(this)
+    .removeClass()
+    .addClass("start-record btn-dark text-danger")
+    .text("Start Recording");
+  mediaRecorder.stop();
+});
+
+var mediaRecorder;
+var chunks = [];
+async function captureScreen(
+  mediaContraints = {
+    video: true,
+  }
+) {
+  const screenStream = await navigator.mediaDevices.getDisplayMedia(
+    mediaContraints
+  );
+  return screenStream;
+}
+async function captureAudio(
+  mediaContraints = {
+    video: false,
+    audio: true,
+  }
+) {
+  const audioStream = await navigator.mediaDevices.getUserMedia(
+    mediaContraints
+  );
+  return audioStream;
+}
+async function startRecording() {
+  const screenStream = await captureScreen();
+  const audioStream = await captureAudio();
+  const stream = new MediaStream([
+    ...screenStream.getTracks(),
+    ...audioStream.getTracks(),
+  ]);
+  mediaRecorder = new MediaRecorder(stream);
+  mediaRecorder.start();
+  mediaRecorder.onstop = function (e) {
+    var clipName = prompt("Enter a name for your recording");
+    stream.getTracks().forEach((track) => track.stop());
+    const blob = new Blob(chunks, {
+      type: "video/webm",
+    });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.style.display = "none";
+    a.href = url;
+    a.download = clipName + ".webm";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }, 100);
+  };
+  mediaRecorder.ondataavailable = function (e) {
+    chunks.push(e.data);
+  };
+}
 
   return {
     _init: function (uid, mid) {
