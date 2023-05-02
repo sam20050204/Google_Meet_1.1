@@ -104,9 +104,9 @@ height: 600px;
     border: 1px solid lightgray;
     border-radius: 50%;
 }
-/*.action-icon-style span.material-icons{
-    font-size: 18px; 
-}*/
+.action-icon-style span.material-icons{
+    /* font-size: 18px; */
+}
 .end-call-wrap{
     -ms-transform: rotate(135deg);
     transform: rotate(135deg);
@@ -123,11 +123,11 @@ video{
     width: 300px;
 }
 .active{
-    background-color: #a2dada47;
+    background-color: #00808047;
     border-radius: 5px;
 }
 .top-box{
-    background-color: rgba(79, 131, 123, 0.644);
+    background-color: rgb(14 6 6);
     position: fixed;
     width: 30%;
     height: 30%;
