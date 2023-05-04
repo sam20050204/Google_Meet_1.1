@@ -41,7 +41,7 @@ var AppProcess = (function () {
       } else {
         audio.enabled = false;
         $(this).html(
-          "<span class='material-icons' style='width:100%;'>mic_off</span>" 
+          "<span class='material-icons' style='width:100%;'>mic_off</span>"
         );
         removeMediaSenders(rtp_aud_senders);
         audio.stop();
@@ -126,7 +126,6 @@ var AppProcess = (function () {
       $("#ScreenShareOnOf").html(
         '<span class="material-icons">present_to_all</span><div>Present Now</div>'
       );
-        $("#ScreenShareOnOf").html('<span class="material-icons">present_to_all</span><div>Present Now</div>')
       video_st = newVideoState;
 
       removeVideoStream(rtp_vid_senders);
@@ -333,22 +332,21 @@ var AppProcess = (function () {
       remote_vid_stream[connid] = null;
     }
   }
-return {
-  setNewConnection: async function (connid) {
-    await setConnection(connid);
-  },
-  init: async function (SDP_function, my_connid) {
-    await _init(SDP_function, my_connid);
-  },
-  processClientFunc: async function (data, from_connid) {
-    await SDPProcess(data, from_connid);
-  },
-  closeConnectionCall: async function (connid) {
-    await closeConnection(connid);
-  },
-};
+  return {
+    setNewConnection: async function (connid) {
+      await setConnection(connid);
+    },
+    init: async function (SDP_function, my_connid) {
+      await _init(SDP_function, my_connid);
+    },
+    processClientFunc: async function (data, from_connid) {
+      await SDPProcess(data, from_connid);
+    },
+    closeConnectionCall: async function (connid) {
+      await closeConnection(connid);
+    },
+  };
 })();
-
 var MyApp = (function () {
   var socket = null;
   var user_id = "";
@@ -383,14 +381,50 @@ var MyApp = (function () {
         }
       }
     });
-socket.on("inform_other_about_disconnected_user",function(data){
-  $("#"+data.connId).remove();
-  AppProcess.closeConnectionCall(data.connId);
-})
+    socket.on("inform_other_about_disconnected_user", function (data) {
+      $("#" + data.connId).remove();
+      $(".participant-count").text(data.uNumber);
+      $("#participant_" + data.connId + "").remove();
+      AppProcess.closeConnectionCall(data.connId);
+    });
+    // <!-- .....................HandRaise .................-->
+
+    socket.on("HandRaise_info_for_others", function (data) {
+      if (data.handRaise) {
+        $("#hand_" + data.connId).show();
+      } else {
+        $("#hand_" + data.connId).hide();
+      }
+    });
+    // <!-- .....................HandRaise .................-->
+
     socket.on("inform_others_about_me", function (data) {
       addUser(data.other_user_id, data.connId, data.userNumber);
 
       AppProcess.setNewConnection(data.connId);
+    });
+    socket.on("showFileMessage", function (data) {
+      var num_of_att = $(".left-align").length;
+      var added_mar = num_of_att * 10;
+      var mar_top = "-" + (135 + added_mar);
+      $(".g-details").css({ "margin-top": mar_top });
+
+      var time = new Date();
+      var lTime = time.toLocaleString("en-US", {
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+      });
+      var attachFileAreaForOther = document.querySelector(".show-attach-file");
+
+      attachFileAreaForOther.innerHTML +=
+        "<div class='left-align' style='display:flex; align-items:center;'><img src='public/assets/images/other.jpg' style='height:40px;width:40px;' class='caller-image circle'><div style='font-weight:600;margin:0 5px;'>" +
+        data.username +
+        "</div>:<div><a style='color:#007bff;' href='" +
+        data.filePath +
+        "' download>" +
+        data.fileName +
+        "</a></div></div><br/>";
     });
     socket.on("inform_me_about_other_user", function (other_users) {
       var userNumber = other_users.length;
@@ -409,17 +443,295 @@ socket.on("inform_other_about_disconnected_user",function(data){
     socket.on("SDPProcess", async function (data) {
       await AppProcess.processClientFunc(data.message, data.from_connid);
     });
+    socket.on("showChatMessage", function (data) {
+      var time = new Date();
+      var lTime = time.toLocaleString("en-US", {
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+      });
+      var div = $("<div>").html(
+        "<span class='font-weight-bold mr-3' style='color:black'>" +
+          data.from +
+          "</span>" +
+          lTime +
+          "</br>" +
+          data.message
+      );
+      $("#messages").append(div);
+    });
+  }
+  function eventHandeling() {
+    // <!-- ......................HandRaise ...............-->
+    var handRaise = false;
+    $("#handRaiseAction").on("click", async function () {
+      if (!handRaise) {
+        $("img.handRaise").show();
+        handRaise = true;
+        socket.emit("sendHandRaise", handRaise);
+      } else {
+        $("img.handRaise").hide();
+        handRaise = false;
+        socket.emit("sendHandRaise", handRaise);
+      }
+    });
+    // <!-- ......................HandRaise ...............-->
+    $("#btnsend").on("click", function () {
+      var msgData = $("#msgbox").val();
+      socket.emit("sendMessage", msgData);
+      var time = new Date();
+      var lTime = time.toLocaleString("en-US", {
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+      });
+      var div = $("<div>").html(
+        "<span class='font-weight-bold mr-3' style='color:black'>" +
+          user_id +
+          "</span>" +
+          lTime +
+          "</br>" +
+          msgData
+      );
+      $("#messages").append(div);
+      $("#msgbox").val("");
+    });
+
+    var url = window.location.href;
+    $(".meeting_url").text(url);
+
+    $("#divUsers").on("dblclick", "video", function () {
+      this.requestFullscreen();
+    });
   }
 
-    function addUser(other_user_id, connId, userNum) {
+  function addUser(other_user_id, connId, userNum) {
     var newDivId = $("#otherTemplate").clone();
     newDivId = newDivId.attr("id", connId).addClass("other");
     newDivId.find("h2").text(other_user_id);
     newDivId.find("video").attr("id", "v_" + connId);
     newDivId.find("audio").attr("id", "a_" + connId);
+    // <!-- .....................HandRaise .................-->
     newDivId.find("img").attr("id", "hand_" + connId);
+    // <!-- .....................HandRaise .................-->
     newDivId.show();
     $("#divUsers").append(newDivId);
+    $(".in-call-wrap-up").append(
+      '<div class="in-call-wrap d-flex justify-content-between align-items-center mb-3" id="participant_' +
+        connId +
+        '"> <div class="participant-img-name-wrap display-center cursor-pointer"> <div class="participant-img"> <img src="public/Assets/images/other.jpg" alt="" class="border border-secondary" style="height: 40px;width: 40px;border-radius: 50%;"> </div> <div class="participant-name ml-2"> ' +
+        other_user_id +
+        '</div> </div> <div class="participant-action-wrap display-center"> <div class="participant-action-dot display-center mr-2 cursor-pointer"> <span class="material-icons"> more_vert </span> </div> <div class="participant-action-pin display-center mr-2 cursor-pointer"> <span class="material-icons"> push_pin </span> </div> </div> </div>'
+    );
+    $(".participant-count").text(userNum);
+  }
+  $(document).on("click", ".people-heading", function () {
+    $(".in-call-wrap-up").show(300);
+    $(".chat-show-wrap").hide(300);
+    $(this).addClass("active");
+    $(".chat-heading").removeClass("active");
+  });
+  $(document).on("click", ".chat-heading", function () {
+    $(".in-call-wrap-up").hide(300);
+    $(".chat-show-wrap").show(300);
+    $(this).addClass("active");
+    $(".people-heading").removeClass("active");
+  });
+  $(document).on("click", ".meeting-heading-cross", function () {
+    $(".g-right-details-wrap").hide(300);
+  });
+  $(document).on("click", ".top-left-participant-wrap", function () {
+    $(".people-heading").addClass("active");
+    $(".chat-heading").removeClass("active");
+    $(".g-right-details-wrap").show(300);
+    $(".in-call-wrap-up").show(300);
+    $(".chat-show-wrap").hide(300);
+  });
+  $(document).on("click", ".top-left-chat-wrap", function () {
+    $(".people-heading").removeClass("active");
+    $(".chat-heading").addClass("active");
+    $(".g-right-details-wrap").show(300);
+    $(".in-call-wrap-up").hide(300);
+    $(".chat-show-wrap").show(300);
+  });
+  $(document).on("click", ".end-call-wrap", function () {
+    $(".top-box-show")
+      .css({
+        display: "block",
+      })
+      .html(
+        '<div class="top-box align-vertical-middle profile-dialogue-show"> <h4 class="mt-3" style="text-align:center;color:white;">Leave Meeting</h4> <hr> <div class="call-leave-cancel-action d-flex justify-content-center align-items-center w-100"> <a href="/action.html"><button class="call-leave-action btn btn-danger mr-5">Leave</button></a> <button class="call-cancel-action btn btn-secondary">Cancel</button> </div> </div>'
+      );
+  });
+  $(document).mouseup(function (e) {
+    var container = new Array();
+    container.push($(".top-box-show"));
+    $.each(container, function (key, value) {
+      if (!$(value).is(e.target) && $(value).has(e.target).length == 0) {
+        $(value).empty();
+      }
+    });
+  });
+  $(document).mouseup(function (e) {
+    var container = new Array();
+    container.push($(".g-details"));
+    container.push($(".g-right-details-wrap"));
+    $.each(container, function (key, value) {
+      if (!$(value).is(e.target) && $(value).has(e.target).length == 0) {
+        $(value).hide(300);
+      }
+    });
+  });
+  $(document).on("click", ".call-cancel-action", function () {
+    $(".top-box-show").html("");
+  });
+  $(document).on("click", ".copy_info", function () {
+    var $temp = $("<input>");
+    $("body").append($temp);
+    $temp.val($(".meeting_url").text()).select();
+    document.execCommand("copy");
+    $temp.remove();
+    $(".link-conf").show();
+    setTimeout(function () {
+      $(".link-conf").hide();
+    }, 3000);
+  });
+  $(document).on("click", ".meeting-details-button", function () {
+    $(".g-details").slideDown(300);
+  });
+  $(document).on("click", ".g-details-heading-attachment", function () {
+    $(".g-details-heading-show").hide();
+    $(".g-details-heading-show-attachment").show();
+    $(this).addClass("active");
+    $(".g-details-heading-detail").removeClass("active");
+  });
+  $(document).on("click", ".g-details-heading-detail", function () {
+    $(".g-details-heading-show").show();
+    $(".g-details-heading-show-attachment").hide();
+    $(this).addClass("active");
+    $(".g-details-heading-attachment").removeClass("active");
+  });
+  var base_url = window.location.origin;
+
+  $(document).on("change", ".custom-file-input", function () {
+    var fileName = $(this).val().split("\\").pop();
+    $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+  });
+
+  $(document).on("click", ".share-attach", function (e) {
+    e.preventDefault();
+    var att_img = $("#customFile").prop("files")[0];
+    var formData = new FormData();
+    formData.append("zipfile", att_img);
+    formData.append("meeting_id", meeting_id);
+    formData.append("username", user_id);
+    console.log(formData);
+    $.ajax({
+      url: base_url + "/attachimg",
+      type: "POST",
+      data: formData,
+      contentType: false,
+      processData: false,
+      success: function (response) {
+        console.log(response);
+      },
+      error: function () {
+        console.log("error");
+      },
+    });
+
+    var attachFileArea = document.querySelector(".show-attach-file");
+    var attachFileName = $("#customFile").val().split("\\").pop();
+    var attachFilePath =
+      "public/attachment/" + meeting_id + "/" + attachFileName;
+    attachFileArea.innerHTML +=
+      "<div class='left-align' style='display:flex; align-items:center;'><img src='public/assets/images/other.jpg' style='height:40px;width:40px;' class='caller-image circle'><div style='font-weight:600;margin:0 5px;'>" +
+      user_id +
+      "</div>:<div><a style='color:#007bff;' href='" +
+      attachFilePath +
+      "' download>" +
+      attachFileName +
+      "</a></div></div><br/>";
+    $("label.custom-file-label").text("");
+    socket.emit("fileTransferToOther", {
+      username: user_id,
+      meetingid: meeting_id,
+      filePath: attachFilePath,
+      fileName: attachFileName,
+    });
+  });
+  $(document).on("click", ".option-icon", function () {
+    $(".recording-show").toggle(300);
+  });
+
+  $(document).on("click", ".start-record", function () {
+    $(this)
+      .removeClass()
+      .addClass("stop-record btn-danger text-dark")
+      .text("Stop Recording");
+    startRecording();
+  });
+  $(document).on("click", ".stop-record", function () {
+    $(this)
+      .removeClass()
+      .addClass("start-record btn-dark text-danger")
+      .text("Start Recording");
+    mediaRecorder.stop();
+  });
+
+  var mediaRecorder;
+  var chunks = [];
+  async function captureScreen(
+    mediaContraints = {
+      video: true,
+    }
+  ) {
+    const screenStream = await navigator.mediaDevices.getDisplayMedia(
+      mediaContraints
+    );
+    return screenStream;
+  }
+  async function captureAudio(
+    mediaContraints = {
+      video: false,
+      audio: true,
+    }
+  ) {
+    const audioStream = await navigator.mediaDevices.getUserMedia(
+      mediaContraints
+    );
+    return audioStream;
+  }
+  async function startRecording() {
+    const screenStream = await captureScreen();
+    const audioStream = await captureAudio();
+    const stream = new MediaStream([
+      ...screenStream.getTracks(),
+      ...audioStream.getTracks(),
+    ]);
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.start();
+    mediaRecorder.onstop = function (e) {
+      var clipName = prompt("Enter a name for your recording");
+      stream.getTracks().forEach((track) => track.stop());
+      const blob = new Blob(chunks, {
+        type: "video/webm",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.style.display = "none";
+      a.href = url;
+      a.download = clipName + ".webm";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+    };
+    mediaRecorder.ondataavailable = function (e) {
+      chunks.push(e.data);
+    };
   }
 
   return {
